@@ -15,9 +15,9 @@ m1 <- glmer(resp ~ representation * veracity + (1|id) + (1|item), dat, family = 
 
 The second example is a linear mixed-effects model (LMM) with segmentation
 agreement as metric response variable and three manipulated variables (Trend
-(metric): -1, -0.5, 0.5, 1), Framing: Invasive vs. Endangered, Spatial Pattern:
-Clustered vs. Distributed) and random intercepts and random slopes for subjects
-for all variables. All subjects saw all conditions.
+(metric): -1, -0.5, 0.5, 1; Framing: Invasive vs. Endangered; Spatial Pattern:
+Clustered vs. Distributed). All subjects saw all conditions, so random
+intercepts and random slopes for all variables are included in the model.
 
 ```r
 m2 <- lmer(resp ~ framing * trend * spatialdist + (trend + framing + spatialdist | subj_id),
