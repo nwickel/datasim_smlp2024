@@ -42,20 +42,6 @@ The manipulated conditions are:
 
 * veracity of sentence: true vs. false (indicated by color of the sentence)
 
-<!--
-
-## Short Description of Project
-
-During reading, people create situation models that are non-linguistic mental
-representations (e.g., graphical representations) of what the text is about
-instead of a representation of the text itself. The purpose of this study is to
-test if this modality transfer is testable. Therefore, we want to investigate
-whether people are more effective at recognizing incorrect scene information
-they receive while reading in the same modality (text-based presentation) as
-compared to a different modality (graphical presentation) in the subsequent test
-phase.
-
--->
 
 # Hypothesis
 
@@ -64,7 +50,7 @@ representation than participants who must identify false information in a
 graphical representation of the scene. No difference for true information is
 expected.
 
-```{r H2, fig.align = "center", fig.height = 5, fig.width = 5}
+```{r hypothesis, fig.align = "center", fig.height = 5, fig.width = 5}
 # Hypothesis: 0.1 probability difference for true vs. false for graphic representation
 design <- data.frame(representation = factor(rep(c("text", "graphic"), each = 2),
                                              levels = c("text", "graphic")),

@@ -1,10 +1,15 @@
 Data simulation and example analysis for *Scene Visualization: Transfer
 from Text to Visuals*
 ================
-2024-09-02
+2024-09-03
 
 ``` r
 library(lme4)
+```
+
+    ## Loading required package: Matrix
+
+``` r
 library(lattice)
 set.seed(1614)
 ```
@@ -44,21 +49,6 @@ The manipulated conditions are:
 - veracity of sentence: true vs. false (indicated by color of the
   sentence)
 
-<!--
-
-## Short Description of Project
-
-During reading, people create situation models that are non-linguistic mental
-representations (e.g., graphical representations) of what the text is about
-instead of a representation of the text itself. The purpose of this study is to
-test if this modality transfer is testable. Therefore, we want to investigate
-whether people are more effective at recognizing incorrect scene information
-they receive while reading in the same modality (text-based presentation) as
-compared to a different modality (graphical presentation) in the subsequent test
-phase.
-
--->
-
 # Hypothesis
 
 Participants will be better in identifying *false* information in a
@@ -78,7 +68,7 @@ xyplot(prob ~ representation, data = design, groups = veracity,
        type = "b", ylim = 0:1, auto.key = list(space = "top"))
 ```
 
-<img src="datasim_GLMM_NA_files/figure-gfm/H2-1.png" style="display: block; margin: auto;" />
+<img src="datasim_GLMM_NA_files/figure-gfm/hypothesis-1.png" style="display: block; margin: auto;" />
 
 ``` r
 knitr::kable(design)
@@ -177,7 +167,7 @@ m1 <- glmer(resp ~ representation * veracity + (1|id) + (1|item), dat,
 summary(m1)
 ```
 
-    ## Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) [glmerMod]
+    ## Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) ['glmerMod']
     ##  Family: binomial  ( logit )
     ## Formula: resp ~ representation * veracity + (1 | id) + (1 | item)
     ##    Data: dat
