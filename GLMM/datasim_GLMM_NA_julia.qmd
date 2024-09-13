@@ -1,0 +1,171 @@
+---
+title: "Data simulation and example analysis for _Scene Visualization: Transfer from Text to Visuals_"
+engine: julia
+---
+
+```{julia}
+#| label: setup
+using CairoMakie
+using AlgebraOfGraphics
+using DataFrameMacros
+using DataFrames
+using MixedModels
+using MixedModelsSim
+using MixedModelsMakie
+using Random
+using LogExpFunctions
+using LinearAlgebra
+```
+
+# Description
+
+This is a simulated data set with accompanying data analysis which was used as
+basis for a power simulation for an experiment at the Leibniz-Institut für
+Wissensmedien (IWM).
+
+Underlying idea of the study: People construct mental representations of a scene
+while reading, meaning textual content is, e.g., translated into visual mental
+representations. This is tested by switching the presentation modality between
+the learning and the test phase. During the learning phase, subjects are
+presented with a scene description in text form. In the test phase, the scenes
+are presented either in text or in graphical form.
+
+Transfer of text-based modality to visual modality:
+
+* Are participants able to identify information in a visual representation of a
+  scene they read? 
+
+* How accurate is it?
+
+Participants read 25 sentences that can be either true (15) or false (10).
+Afterwards, they have to judge if a scene is true or false. This scene is either
+presented as text or as a picture.
+
+The dependent variable is correct answer: true sentence is classified as true.
+
+The manipulated conditions are:
+
+* representation: text vs. picture
+
+* veracity of sentence: true vs. false (indicated by color of the sentence)
+
+
+# Hypothesis
+
+Participants will be better in identifying _false_ information in a text-based
+representation than participants who must identify false information in a
+graphical representation of the scene. No difference for true information is
+expected.
+
+```{julia}
+#| label: hypothesis
+#| fig-align: center
+#| fig-height: 5
+#| fig-width: 5
+# Hypothesis: 0.1 probability difference for true vs. false for graphic representation
+design = DataFrame(representation = ["text", "text", "graphic", "graphic"],
+                   veracity = ["true", "false", "true", "false"],
+                   prob = [.55, .55, .5, .4]
+)
+
+plt = data(design) * mapping(
+    :representation => "representation",
+    :prob => "Probability correct";
+    color = :veracity
+    ) * visual(Lines);
+draw(plt; axis=(;limits = (0.8, 2.2, 0, 1)))
+```
+
+# Data simulation
+
+```{julia}
+#| label: datasim
+Random.seed!(1106);
+
+n_subj = 150;
+n_item = 25;
+
+subj_ids = "S" .* lpad.(string.(1:n_subj), 3, "0");
+item = 1:n_item;
+
+subj_data = DataFrame[];
+for subj in subj_ids
+    sdat = DataFrame(; subj, item)
+    push!(subj_data, sdat)
+end
+
+simdat = reduce(vcat, subj_data);
+simdat.representation = repeat(reduce(vcat,
+                              [repeat(["text"], n_item),
+                              repeat(["graphic"], n_item)]), 75);
+
+simdat.veracity = repeat(reduce(vcat,
+                              [repeat(["true"], 15),
+                              repeat(["false"], 10)]), 150);
+
+simdat.dv .= 1;
+
+m0 = let contrasts, form
+    contrasts = Dict(
+                   :representation => DummyCoding(base = "text"),
+                   :veracity => (DummyCoding(base = "true"))
+    )
+    form = @formula(dv ~ 1 + representation * veracity + (1 | subj) + (1 | item))
+    MixedModel(form, simdat, Bernoulli(); contrasts)
+end
+
+X = [
+    1 0 0 0
+    1 0 1 0
+    1 1 0 0
+    1 1 1 1
+    ];
+
+# fixed effects
+#β = inv(X) * logit.(design.prob)
+β = X \ logit.(design.prob)        # rdiv in the docs
+# random effects for subj and item
+θ = [.5, .3]
+
+simdat.dv = simulate(m0; θ, β);
+simdat
+```
+
+## Descriptives
+
+```{julia}
+#| label: descriptives
+#| fig-align: center
+#| fig-height: 5
+#| fig-width: 5
+datm = combine(groupby(simdat, [:veracity, :representation]), :dv => sum;
+               renamecols=false);
+datm.n = combine(groupby(simdat,
+                 [:veracity, :representation]),
+                  :dv => length; renamecols=false).dv;
+datm.prob = datm.dv ./ datm.n
+
+plt = data(datm) * mapping(
+    :representation => "representation",
+    :prob => "Probability correct";
+    color = :veracity
+    ) * visual(Lines);
+draw(plt; axis=(; limits = (0.8, 2.2, 0, 1)))
+```
+
+# Analysis with `MixedModels.jl`
+
+```{julia}
+#| label: analysis
+m1 = let contrasts, form
+    contrasts = Dict(
+                   :representation => DummyCoding(base = "text"),
+                   :veracity => (DummyCoding(base = "true"))
+    )
+    form = @formula(dv ~ 1 + representation * veracity + (1 | subj) + (1 | item))
+    fit(MixedModel, form, simdat, Bernoulli(); contrasts)
+end
+issingular(m1)
+
+```
+
