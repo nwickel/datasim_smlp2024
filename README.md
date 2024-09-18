@@ -24,3 +24,9 @@ m2 <- lmer(resp ~ framing * trend * spatialdist + (trend + framing + spatialdist
            data = dat)
 ```
 
+# RvsJulia
+
+After the summer school I started comparing results for power simulations
+conducted in R and julia for the same mixed models. The scripts are in this
+folder.
+
