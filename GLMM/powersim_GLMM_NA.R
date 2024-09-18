@@ -35,21 +35,35 @@ dat$representation <- relevel(dat$representation, ref = "text")
 dat$veracity <- relevel(dat$veracity, ref = "true")
 
 # Power simulation
-pwrH2 <- function(sim) {
-  m1 <- glmer(sim ~ representation * veracity + (1|id) + (1|item), dat,
-              family = binomial)
-  summary(m1)$coef["representationgraphic:veracityfalse", "Pr(>|z|)"]
+
+get_model <- function(sim) {
+  glmer(sim ~ representation * veracity + (1|id) + (1|item), dat,
+        family = binomial)
 }
 
-pval <- xfun::cache_rds({
+models <- xfun::cache_rds({
   sim <- simulate( ~ representation * veracity + (1|id) + (1|item),
                   newdata   = dat,
                   newparams = list(beta = fix, theta = ran),
                   family    = binomial,
-                  nsim      = 500)
-  sapply(sim, pwrH2)  # ATTENTION: Runs for quite some time!
+                  nsim      = 1000)
+  sapply(sim, get_model)  # ATTENTION: Runs for quite some time!
 })
 
 # Power
-mean(pval < 0.05) 
+pval <- sapply(models,
+  function(x) summary(x)$coef["representationgraphic:veracityfalse", "Pr(>|z|)"])
+mean(pval < 0.05)
+
+# Parameter recovery
+mean(sapply(models, function(x) fixef(x)["representationgraphic:veracityfalse"]))
+# -0.4042824
+
+# Bootstrap SE
+sd(sapply(models, fixef)["representationgraphic:veracityfalse", ])
+# 0.1432599
+
+# Mean SE of Wald test
+mean(sapply(models, function(x) summary(x)$coef["representationgraphic:veracityfalse", 2]))
+# 0.1394503
 

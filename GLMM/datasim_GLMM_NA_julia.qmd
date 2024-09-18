@@ -84,24 +84,20 @@ Random.seed!(1106);
 
 n_subj = 150;
 n_item = 25;
+n_scene = 5;
 
-subj_ids = "S" .* lpad.(string.(1:n_subj), 3, "0");
-item = 1:n_item;
-
-subj_data = DataFrame[];
-for subj in subj_ids
-    sdat = DataFrame(; subj, item)
-    push!(subj_data, sdat)
-end
-
-simdat = reduce(vcat, subj_data);
-simdat.representation = repeat(reduce(vcat,
-                              [repeat(["text"], n_item),
-                              repeat(["graphic"], n_item)]), 75);
-
-simdat.veracity = repeat(reduce(vcat,
-                              [repeat(["true"], 15),
-                              repeat(["false"], 10)]), 150);
+simdat = DataFrame(subj = repeat("S" .* lpad.(string.(1:n_subj), 3, "0"),
+                                 outer = n_item),
+                   item = repeat(repeat(string.(1:n_scene), inner = n_scene) .*
+                                 ":" .* string.(1:n_item), inner = n_subj),
+                   representation = repeat(reduce(vcat,
+                                                  [repeat(["text"], n_item),
+                                                   repeat(["graphic"], n_item)]),
+                                           Int(n_subj / 2)),
+                   veracity = repeat(reduce(vcat, [repeat(["true"], 15),
+                                                   repeat(["false"], 10)]),
+                                     n_subj)
+                  );
 
 simdat.dv .= 1;
 
@@ -114,12 +110,7 @@ m0 = let contrasts, form
     MixedModel(form, simdat, Bernoulli(); contrasts)
 end
 
-X = [
-    1 0 0 0
-    1 0 1 0
-    1 1 0 0
-    1 1 1 1
-    ];
+X = modelmatrix(m0);
 
 # fixed effects
 #β = inv(X) * logit.(design.prob)
